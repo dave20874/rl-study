@@ -10,15 +10,17 @@
 //  * A set of actions, identified with u32 values (and a function giving valid actions for a state)
 //  * A function p(s, a) -> Vec<(prob, sp, expected_r)> A list of next states and expected rewards, with an associated probability
 
+use std::collections::HashMap;
+
 trait DPEnv {
     // get states
-    fn states(&self) -> Vec<usize>;
+    fn states(&self) -> &Vec<usize>;
 
     // get actions (from this state)
-    fn actions(&self, state: usize) -> Vec<usize>;
+    fn actions(&self, state: usize) -> &Vec<usize>;
 
     // Dynamics: takes a state and action, returns a vector of probabilities for each expected reward and next state
-    fn p(&self, s: usize, a: usize) -> Vec<(f64, f64, usize)>;
+    fn p(&self, s: usize, a: usize) -> &Vec<(f64, f64, usize)>;
 }
 
 // Grid World for example N
@@ -40,9 +42,9 @@ impl GridWorld1 {
         let goal = (width-1, 0);     // goal in lower right
 
         let mut states_vec: Vec<usize> = Vec::new();
-        for y in 0..self.dim.1 {
-            for x in 0..self.dim.0 {
-                states_vec.push(self.pos_to_state((x, y)));
+        for y in 0..dim.1 {
+            for x in 0..dim.0 {
+                states_vec.push(GridWorld1::pos_to_state((x, y), dim.1));
             }
         }
 
@@ -51,11 +53,12 @@ impl GridWorld1 {
         GridWorld1 { dim, start, goal, current: start, states_vec, actions_vec}
     }
 
-    fn pos_to_state(&self, pos: (usize, usize)) -> usize {
+    fn pos_to_state(pos: (usize, usize), width: usize) -> usize {
         // positions are given state numbers starting with 0 in lower left (0, 0), incrementing to the right
         // with +X.
-        pos.0 + pos.1*self.width
+        pos.0 + pos.1*width
     }
+
 }
 
 impl DPEnv for GridWorld1 {
@@ -67,21 +70,20 @@ impl DPEnv for GridWorld1 {
         &self.actions_vec
     }
 
-    fn p(s: usize, a: usize) -> Vec<(float64, float64, usize)> {
+    fn p(&self, s: usize, a: usize) -> &Vec<(f64, f64, usize)> {
         // TODO-DW : 
     }
 }
 
 // A trait for a solver of DPEnv environments
-struct DPSolution<T> 
-    where T : DPEnv {
-    values: HashMap<u32, float64>;  // map state to value
-    policy: HashMap<u32, u32>;      // map state to best action
+struct DPSolution {
+    values: HashMap<u32, f64>,  // map state to value
+    policy: HashMap<u32, u32>,      // map state to best action
     // TODO
 }
 
 impl DPSolution {
-    fn solve(env: &DPEnv) -> DPSolution {
+    fn solve(env: &dyn DPEnv) -> DPSolution {
         // TODO : Implement policy iteration and find state values and optimal policy
         DPSolution { }
     }
@@ -89,10 +91,10 @@ impl DPSolution {
 
 fn main() {
     // create Dynamic Programming environment.
-    env = GridWorld1.new();
+    let mut env = GridWorld1.new();
 
     // Compute state values and optimal policy
-    soln = DPSolution.solve(&env);
+    let soln = DPSolution.solve(&mut env);
 
     // Print state values
     // Print optimal policy
